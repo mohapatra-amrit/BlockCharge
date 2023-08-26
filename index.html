@@ -1,0 +1,549 @@
+<html>
+
+<head>
+  <link rel='shortcut icon' type='image/x-icon' href='/favicon.ico' />
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+    crossorigin="anonymous">
+
+  <title>EV Charging Dapp</title>
+  <style>
+    body {
+    background-color: rgb(85, 241, 189);
+    text-align: center;
+    color: rgb(253, 253, 253);
+    font-family: Arial, Helvetica, sans-serif;
+	background-image: url('cs.jpg');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+	background-position: center;
+
+}
+</style>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>
+
+</head>
+
+<body>
+
+  <script charset="utf-8" src="https://cdn.ethers.io/scripts/ethers-v4.min.js" type="text/javascript">
+  </script>
+
+  <div class="container">
+    <div class="form-group">
+      <h1>OPTIMAL CHARGING STATION</h1>
+      <p>  </p>
+      <div class="row">
+        <div class="col offset-md-4 col-md-4">
+          <label for="withdrawal"></label>
+          <input type="text" placeholder = "INPUT EV x COORDINATE"class="form-control" id="x">
+          <label for="withdrawal"></label>
+          <input type="text" placeholder = "INPUT EV y COORDINATE"class="form-control" id="y">
+          <label for="deposit"></label>
+          <input type="text" placeholder = "INPUT EV REMAINING DISTANCE"class="form-control" id="d">
+          <br>
+          <label for="parameter">CHOOSE A PREFERNCE:</label>
+        <select name="parameter" id="parameter">
+        <option disabled hidden selected>SELECT</option>
+        <option value="distance">DISTANCE</option>
+        <option value="cost">COST</option>
+        </select>
+        <br>
+        <input type="checkbox" id="vehicle1" name="vehicle1">
+        <label for="vehicle1">FAST CHARGING </label>
+        </div>
+      </div>
+      <div class="row mt-1">
+        <div class="col offset-md-5 col-md-2 mt-3 ms-auto">
+          <button class="btn btn-primary btn-block" onclick="calculateParameter()"> SUBMIT </button>
+        </div>
+      </div>
+      <div class="col offset-md-5 col-md-2 mt-3 ms-auto">
+      <button class="btn btn-primary btn-block" onclick="charging_station()"> SHOW STATIONS </button>
+      </div>
+    </div>
+    <div class="" id="result">
+
+    </div>
+  </div>
+
+  <script>
+    window.ethereum.enable()
+    var provider = new ethers.providers.Web3Provider(web3.currentProvider, 'ropsten');
+ 
+    //change this address to that of bank contract    
+    var bankContractAddress = "0x42d35fd4b8D29d1Fe059703bd0FD900918aECF4a";
+    let bankContractABI = [
+	{
+		"inputs": [],
+		"name": "calculate_distance",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "int256",
+				"name": "d",
+				"type": "int256"
+			},
+			{
+				"internalType": "int256",
+				"name": "x",
+				"type": "int256"
+			},
+			{
+				"internalType": "int256",
+				"name": "y",
+				"type": "int256"
+			},
+			{
+				"internalType": "int256",
+				"name": "z",
+				"type": "int256"
+			},
+			{
+				"internalType": "bool",
+				"name": "fast",
+				"type": "bool"
+			}
+		],
+		"name": "distance",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "Charging_station",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "int256",
+				"name": "loc",
+				"type": "int256"
+			},
+			{
+				"internalType": "int256",
+				"name": "x_coordinate",
+				"type": "int256"
+			},
+			{
+				"internalType": "int256",
+				"name": "y_coordinate",
+				"type": "int256"
+			},
+			{
+				"internalType": "int256",
+				"name": "cost",
+				"type": "int256"
+			},
+			{
+				"internalType": "int256",
+				"name": "wait_time",
+				"type": "int256"
+			},
+			{
+				"internalType": "int256",
+				"name": "charging_points",
+				"type": "int256"
+			},
+			{
+				"internalType": "int256",
+				"name": "rating",
+				"type": "int256"
+			},
+			{
+				"internalType": "bool",
+				"name": "fast_charging",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getcharging",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getdistance",
+		"outputs": [
+			{
+				"internalType": "int256",
+				"name": "",
+				"type": "int256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getItems",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "int256",
+						"name": "loc",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "x_coordinate",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "y_coordinate",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "cost",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "wait_time",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "charging_points",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "rating",
+						"type": "int256"
+					},
+					{
+						"internalType": "bool",
+						"name": "fast_charging",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct C.CS[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getlatitude",
+		"outputs": [
+			{
+				"internalType": "int256",
+				"name": "",
+				"type": "int256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getlongitude",
+		"outputs": [
+			{
+				"internalType": "int256",
+				"name": "",
+				"type": "int256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getpreference",
+		"outputs": [
+			{
+				"internalType": "int256",
+				"name": "",
+				"type": "int256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getResult",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "int256",
+						"name": "loc",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "x_coordinate",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "y_coordinate",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "cost",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "wait_time",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "charging_points",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "rating",
+						"type": "int256"
+					},
+					{
+						"internalType": "bool",
+						"name": "fast_charging",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct C.CS[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "sortByDistance",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "int256",
+						"name": "loc",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "x_coordinate",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "y_coordinate",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "cost",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "wait_time",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "charging_points",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "rating",
+						"type": "int256"
+					},
+					{
+						"internalType": "bool",
+						"name": "fast_charging",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct C.CS[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "sortByPrice",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "int256",
+						"name": "loc",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "x_coordinate",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "y_coordinate",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "cost",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "wait_time",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "charging_points",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "rating",
+						"type": "int256"
+					},
+					{
+						"internalType": "bool",
+						"name": "fast_charging",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct C.CS[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "total",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
+
+    provider.listAccounts().then(function (accounts) {
+      signer = provider.getSigner(accounts[0]);
+      bankContract = new ethers.Contract(bankContractAddress, bankContractABI, signer);
+    })
+
+
+    async function calculateParameter(){
+      num1 = $("#x").val()
+      num2 = $("#d").val()
+      num3 = $("#y").val()
+      var index = document.getElementById("parameter").selectedIndex;
+      num4 = index;
+      
+      num5 = $("#vehicle1:checked").val()
+      
+      if(num5=="on")
+      num5=true
+      else
+      num5=false
+      
+      getSettledBalancePromise = bankContract.distance(num1,num2,num3,num4,num5);
+      await getSettledBalancePromise;
+      getSettledBalancePromise = bankContract.calculate_distance();
+      await getSettledBalancePromise;
+      }
+      async function charging_station(){
+        
+        optimalcs = bankContract.getResult()
+        var ans=await optimalcs
+       
+        var i=0;
+        document.getElementById("result").innerHTML="<h3>Available Stations </h3><br>"
+        
+        for(var i=0;i<ans.length;i++){
+            
+        if(ans[i].loc != 0)
+        document.getElementById("result").innerHTML+="<table border='10'><tr bgcolor = 'black'><td>Charging Station: "+(ans[i].name)+" </td> <table border='10'><td>   Distance To Travel : "+(ans[i].loc)+"km</td><td> X Coordinate : "+(ans[i].x_coordinate)+"</td><td>Y Coordinate: "+(ans[i].y_coordinate)+"</td><td> Cost per unit: Rs"+(ans[i].cost)+"</td><td> Wait Time: "+(ans[i].wait_time)+"min</td><td> Charging Points: "+(ans[i].charging_points)+"</td><td> Rating: "+(ans[i].rating)+"<br>"
+        }
+      
+
+
+      }
+    
+    
+    
+  </script>
+</body>
+
+</html>
